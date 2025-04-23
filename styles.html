@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sales Dashboard</title>
+  <style>
+    body { font-family: Arial; text-align: center; padding: 30px; }
+    #dayTime, #date { font-size: 20px; margin: 5px 0; }
+    button, input[type="file"] { padding: 8px; margin: 5px; }
+    table { margin-top: 20px; border-collapse: collapse; width: 100%; font-size: 14px; }
+    th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
+    .delete-btn { background-color: red; color: white; border: none; padding: 5px 10px; cursor: pointer; }
+    td[contenteditable="true"] { background-color: #f8f8f8; }
+    select { padding: 4px; }
+  </style>
+</head>
+<body>
+  <h1>Sales Dashboard</h1>
+  <div id="dayTime"></div>
+  <div id="date"></div>
+
+  <!-- Buttons -->
+  <div>
+    <input type="file" id="excelFile" accept=".xlsx, .xls" />
+    <button onclick="importFromExcel()">Import Excel</button>
+    <button onclick="exportToExcel()">Save & Download Excel</button>
+    <button onclick="addRow()">Add Row</button>
+  </div>
+
+  <!-- Editable Table -->
+  <table id="dataTable">
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Company</th><th>Invoice #</th><th>Gross</th><th>Net VAT</th><th>W/H Tax</th><th>Total</th>
+        <th>User</th><th>Date</th><th>Time</th><th>Year</th><th>Action</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <script>
+    function updateDateTime() {
+      const now = new Date();
+      document.getElementById("dayTime").innerText =
+        now.toLocaleTimeString('en-US') + " | " +
+        now.toLocaleDateString('en-US', { weekday: 'long' });
+      document.getElementById("date").innerText = now.toLocaleDateString();
+    }
+    setInterval(updateDateTime, 1000);
+
+    function createDropdown(value = "") {
+      const options = ["Sales", "Refund", "Service", "Other"];
+      const select = document.createElement("select");
+      options.forEach(opt => {
+        const option = document.createElement("option");
+        option.value = option.text = opt;
+        if (opt === value) option.selected = true;
+        select.appendChild(option);
+      });
+      return select;
+    }
+
+    function addRow(company = "", invoice = "", gross = "", netVat = "", withTax = "", total = "", user = "", date = "", time = "", year = "", type = "Sales") {
+      const row = document.createElement("tr");
+
+      // Add dropdown for type
+      const dropdownCell = document.createElement("td");
+      dropdownCell.appendChild(createDropdown(type));
+      row.appendChild(dropdownCell);
+
+      [company, invoice, gross, netVat, withTax, total, user, date, time, year].forEach(text => {
+        const cell = document.createElement("td");
+        cell.contentEditable = true;
+        cell.textContent = text;
+        row.appendChild(cell);
+      });
+
+      const actionCell = document.createElement("td");
+      actionCell.innerHTML = `<button class="delete-btn" onclick="deleteRow(this)">Delete</button>`;
+      row.appendChild(actionCell);
+
+      document.querySelector("#dataTable tbody").appendChild(row);
+    }
+
+    function deleteRow(button) {
+      const row = button.closest("tr");
+      row.remove();
+    }
+
+    function exportToExcel() {
+      const table = document.getElementById('dataTable');
+      const cloned = table.cloneNode(true);
+
+      // Convert dropdowns to text
+      Array.from(cloned.querySelectorAll("select")).forEach(select => {
+        const cell = document.createElement("td");
+        cell.textContent = select.value;
+        select.parentNode.replaceWith(cell);
+      });
+
+      // Remove action column
+      Array.from(cloned.rows).forEach(row => row.deleteCell(-1));
+
+      const wb = XLSX.utils.table_to_book(cloned, { sheet: "Sales Data" });
+      XLSX.writeFile(wb, "SalesDashboard.xlsx");
+    }
+
+    function importFromExcel() {
+      const file = document.getElementById("excelFile").files[0];
+      if (!file) return alert("Please select an Excel file.");
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+        rows.slice(1).forEach(row => {
+          if (row.length >= 11) addRow(row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], row[0]);
+        });
+      };
+      reader.readAsArrayBuffer(file);
+    }
+  </script>
+</body>
+</html>
