@@ -1,0 +1,44 @@
+body {
+  font-family: Arial;
+  text-align: center;
+  padding: 30px;
+}
+
+#dayTime, #date {
+  font-size: 20px;
+  margin: 5px 0;
+}
+
+button, input[type="file"] {
+  padding: 8px;
+  margin: 5px;
+}
+
+table {
+  margin-top: 20px;
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 14px;
+}
+
+th, td {
+  border: 1px solid #ccc;
+  padding: 6px;
+  text-align: center;
+}
+
+.delete-btn {
+  background-color: red;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+td[contenteditable="true"] {
+  background-color: #f8f8f8;
+}
+
+select {
+  padding: 4px;
+}
